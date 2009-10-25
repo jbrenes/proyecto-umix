@@ -102,7 +102,7 @@ Inicializacion
 	clrf	TEMP		;Pongo en cero la variable temporal
 	clrf	TipoInt		;Pongo en cero la variable para el tipo de interrupción
 	movlw	b'00001111'
-	movwf	PASOS		;Seteo en 15 la cantidad de pasos (Es necesario ajustarlo)
+	movwf	PASOS		;Seteo en 3 la cantidad de pasos (Es necesario ajustarlo)
 	call	banco1
 	movlw 	0x06 
 	movwf 	ADCON1 		;set puerto analógico como digital 
@@ -241,9 +241,9 @@ Tipo3
 
 Adelante
 	call	banco0
-	bsf		PORTC, 0	;Habilitamos canales del L293D (Tomamos el control del motor)
-	bsf		PORTC, 1	;Seteamos el bit RC1
-	bcf		PORTC, 2	;Ponemos en cero el bit RC2
+	bsf		PORTC,0		;Habilitamos canales del L293D (Tomamos el control del motor)
+	bsf		PORTC,1		;Seteamos el bit RC1
+	bcf		PORTC,2		;Ponemos en cero el bit RC2
 	return
 	
 SubrutinaAdelante
@@ -258,9 +258,9 @@ SubrutinaAdelante
 
 Atras
 	call	banco0
-	bsf		PORTC, 0	;Habilitamos canales (Tomamos el control del motor)
-	bcf		PORTC, 1	;Ponemos en cero el bit RC1
-	bsf		PORTC, 2	;Seteamos el bit RC2
+	bsf		PORTC,0		;Habilitamos canales (Tomamos el control del motor)
+	bcf		PORTC,1		;Ponemos en cero el bit RC1
+	bsf		PORTC,2		;Seteamos el bit RC2
 	return
 
 SubrutinaAtras
@@ -274,13 +274,13 @@ SubrutinaAtras
 
 Detener
 	call	banco0
-	bcf		PORTC, 1	;Ponemos en cero el bit RC1
-	bcf		PORTC, 2	;Ponemos en cero el bit RC2
+	bcf		PORTC,1		;Ponemos en cero el bit RC1
+	bcf		PORTC,2		;Ponemos en cero el bit RC2
 	return
 
 LiberarMotorTraccion
 	call	banco0
-	bcf		PORTC, 0	;Deshabilitamos canales del L293B (Liberamos el motor)
+	bcf		PORTC,0		;Deshabilitamos canales del L293B (Liberamos el motor)
 	return
 
 
@@ -303,7 +303,7 @@ LiberarMotorTraccion
 ;Paso 4				GND			+Vcc		+Vcc		GND
 
 Derecha
-	bsf		PORTC, 3	;Tomamos el control del motor
+	bsf		PORTC,3		;Tomamos el control del motor
 	call	Paso1
 	call	EsperaPaP
 	call	Paso2
@@ -312,15 +312,15 @@ Derecha
 	call	EsperaPaP
 	call	Paso4
 	call	EsperaPaP
-	incf	CONT, 1		;Incrementamos el contador
-	movlw	PASOS		;Escribo la cantidad de pasos en W para que la secuencia 1-2-3-4 se ejecute PASOS veces
-	subwf	CONT, 0		;Le resto W a CONT y lo almaceno en W
-	btfss	STATUS, 2	;Me fijo si la operacion dio 0
-	goto 	Derecha		;Si no dio 0, CONT aún no llegó a PASOS entonces repite
-	bcf		PORTC, 3	;Si dio 0, CONT llegó a PASOS entonces libero el motor,
-	clrf	CONT		;pongo en 0 el contador,
+	incf	CONT,1			;Incrementamos el contador
+	movf	PASOS,0			;Escribo la cantidad de pasos en W para que la secuencia 1-2-3-4 se ejecute PASOS veces
+	subwf	CONT,0			;Le resto W a CONT y lo almaceno en W
+	btfss	STATUS,2		;Me fijo si la operacion dio 0
+	goto 	Derecha			;Si no dio 0, CONT aún no llegó a PASOS entonces repite
+	bcf		PORTC,3			;Si dio 0, CONT llegó a PASOS entonces libero el motor,
+	clrf	CONT			;pongo en 0 el contador,
 	call	LiberarMotorPaP	;libero el motor
-	goto 	Main
+	return
 
 SubrutinaDerecha
 	call	banco0
@@ -332,7 +332,7 @@ SubrutinaDerecha
 	goto	Main
 
 Izquierda
-	bsf		PORTC, 3	;Tomamos el control del motor
+	bsf		PORTC,3			;Tomamos el control del motor
 	call	Paso4
 	call	EsperaPaP
 	call	Paso3
@@ -341,19 +341,19 @@ Izquierda
 	call	EsperaPaP
 	call	Paso1
 	call	EsperaPaP
-	incf	CONT, 1		;Incrementamos el contador
-	movlw	PASOS		;Escribo la cantidad de pasos en W para que la secuencia 4-3-2-1 se ejecute PASOS veces
-	subwf	CONT, 0		;Le resto W a CONT y lo almaceno en W
-	btfss	STATUS, 2	;Me fijo si la operacion dio 0
+	incf	CONT,1			;Incrementamos el contador
+	movf	PASOS,0			;Escribo la cantidad de pasos en W para que la secuencia 4-3-2-1 se ejecute PASOS veces
+	subwf	CONT,0			;Le resto W a CONT y lo almaceno en W
+	btfss	STATUS,2		;Me fijo si la operacion dio 0
 	goto 	Izquierda		;Si no dio 0, CONT aún no llegó a PASOS entonces repite
-	bcf		PORTC, 3	;Si dio 0, CONT llegó a PASOS entonces libero el motor,
-	clrf	CONT		;pongo en 0 el contador,
+	bcf		PORTC,3			;Si dio 0, CONT llegó a PASOS entonces libero el motor,
+	clrf	CONT			;pongo en 0 el contador,
 	call	LiberarMotorPaP	;libero el motor
-	goto	Main
+	return
 
 SubrutinaIzquierda
 	call	banco0
-	bcf		TipoInt,3	;Limpio el flag de TipoInt
+	bcf		TipoInt,3		;Limpio el flag de TipoInt
 	call 	Adelante
 	call	Izquierda
 	call	Detener
@@ -362,35 +362,35 @@ SubrutinaIzquierda
 
 LiberarMotorPaP
 	call	banco0
-	bcf		PORTC, 3	;Deshabilitamos canales del L293B (Liberamos el motor)
+	bcf		PORTC,3			;Deshabilitamos canales del L293B (Liberamos el motor)
 	return
 
 Paso1
-	bsf		PORTC, 4
-	bcf		PORTC, 5
-	bsf		PORTC, 6
-	bcf		PORTC, 7
+	bsf		PORTC,4
+	bcf		PORTC,5
+	bsf		PORTC,6
+	bcf		PORTC,7
 	return
 
 Paso2
-	bsf		PORTC, 4
-	bcf		PORTC, 5
-	bcf		PORTC, 6
-	bsf		PORTC, 7
+	bsf		PORTC,4
+	bcf		PORTC,5
+	bcf		PORTC,6
+	bsf		PORTC,7
 	return
 
 Paso3
-	bcf		PORTC, 4
-	bsf		PORTC, 5
-	bcf		PORTC, 6
-	bsf		PORTC, 7
+	bcf		PORTC,4
+	bsf		PORTC,5
+	bcf		PORTC,6
+	bsf		PORTC,7
 	return	
 
 Paso4
-	bcf		PORTC, 4
-	bsf		PORTC, 5
-	bsf		PORTC, 6
-	bcf		PORTC, 7
+	bcf		PORTC,4
+	bsf		PORTC,5
+	bsf		PORTC,6
+	bcf		PORTC,7
 	return
 
 ;Rutina de espera
@@ -404,7 +404,7 @@ Espera
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
-	bsf		T2CON, 2		;Encendemos el Timer 2
+	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return		
 
@@ -418,16 +418,16 @@ EsperaPaP
 	movlw	b'00000011'
 	movwf	T2CON
 ;	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
-	bsf		T2CON, 2		;Encendemos el Timer 2
+	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return
 
 
 Test
-	btfss	PIR1, 1			;Terminó la espera?
+	btfss	PIR1,1			;Terminó la espera?
 	goto 	Test			;Si no terminó sigo esperando
-	bcf		PIR1, 1			;Si terminó, limpio el flag
-	bcf		T2CON, 2		;Apago el timer 2
+	bcf		PIR1,1			;Si terminó, limpio el flag
+	bcf		T2CON,2			;Apago el timer 2
 	return					;y regreso
 
 
@@ -465,19 +465,19 @@ EsperaNotific				;CONFIGURAR EL TIEMPO DE ESPERA NECESARIO
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
-	bsf		T2CON, 2		;Encendemos el Timer 2
+	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return		
 
 
 banco0
-	bcf 	STATUS, RP1
-	bcf 	STATUS, RP0
+	bcf 	STATUS,RP1
+	bcf 	STATUS,RP0
 	return
 
 banco1
-	bcf 	STATUS, RP1
-	bsf 	STATUS, RP0
+	bcf 	STATUS,RP1
+	bsf 	STATUS,RP0
 	return
 
 
