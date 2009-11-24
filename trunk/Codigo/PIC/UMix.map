@@ -1,0 +1,125 @@
+MPLINK 3.94, Linker
+Linker Map File - Created Tue Nov 24 19:05:25 2009
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x000002
+                   .org_1       code   0x000004    program   0x000002
+                   .cinit    romdata   0x000005    program   0x000004
+                   .org_2       code   0x000020    program   0x000000
+                   .org_3       code   0x000021    program   0x000000
+                   .org_4       code   0x000022    program   0x000000
+                   .org_5       code   0x000023    program   0x000000
+                   .org_6       code   0x000024    program   0x000000
+                   .org_7       code   0x000025    program   0x00025c
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000000      
+                            0x000004    0x000006      
+                            0x000025    0x000152      
+            306 out of 8453 program addresses used, program memory utilization is 3%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                 Adelante   0x0000a9    program     static C:\Sofia\Programa PIC.asm
+     AtencionInterrupcion   0x00005b    program     static C:\Sofia\Programa PIC.asm
+         AtencionSensores   0x000063    program     static C:\Sofia\Programa PIC.asm
+                    Atras   0x0000b5    program     static C:\Sofia\Programa PIC.asm
+                      Aux   0x000024    program     static C:\Sofia\Programa PIC.asm
+                     CONT   0x000020    program     static C:\Sofia\Programa PIC.asm
+               CheckAgain   0x000078    program     static C:\Sofia\Programa PIC.asm
+                  Derecha   0x0000c8    program     static C:\Sofia\Programa PIC.asm
+                  Detener   0x0000c1    program     static C:\Sofia\Programa PIC.asm
+                   Espera   0x000111    program     static C:\Sofia\Programa PIC.asm
+            EsperaNotific   0x000140    program     static C:\Sofia\Programa PIC.asm
+                EsperaPaP   0x00011e    program     static C:\Sofia\Programa PIC.asm
+           Inicializacion   0x000039    program     static C:\Sofia\Programa PIC.asm
+                Izquierda   0x0000e1    program     static C:\Sofia\Programa PIC.asm
+          LiberarMotorPaP   0x0000fa    program     static C:\Sofia\Programa PIC.asm
+     LiberarMotorTraccion   0x0000c5    program     static C:\Sofia\Programa PIC.asm
+                     Main   0x000025    program     static C:\Sofia\Programa PIC.asm
+                    PASOS   0x000021    program     static C:\Sofia\Programa PIC.asm
+                    Paso1   0x0000fd    program     static C:\Sofia\Programa PIC.asm
+                    Paso2   0x000102    program     static C:\Sofia\Programa PIC.asm
+                    Paso3   0x000107    program     static C:\Sofia\Programa PIC.asm
+                    Paso4   0x00010c    program     static C:\Sofia\Programa PIC.asm
+         RecibirDirectiva   0x000089    program     static C:\Sofia\Programa PIC.asm
+        SubrutinaAdelante   0x0000ae    program     static C:\Sofia\Programa PIC.asm
+           SubrutinaAtras   0x0000ba    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaDerecha   0x0000da    program     static C:\Sofia\Programa PIC.asm
+       SubrutinaIzquierda   0x0000f3    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaObstDer   0x00012c    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaObstIzq   0x000133    program     static C:\Sofia\Programa PIC.asm
+          SubrutinaSonido   0x00013a    program     static C:\Sofia\Programa PIC.asm
+                     TEMP   0x000022    program     static C:\Sofia\Programa PIC.asm
+                     Test   0x000127    program     static C:\Sofia\Programa PIC.asm
+                    Tipo0   0x000099    program     static C:\Sofia\Programa PIC.asm
+                    Tipo1   0x00009d    program     static C:\Sofia\Programa PIC.asm
+                    Tipo2   0x0000a1    program     static C:\Sofia\Programa PIC.asm
+                    Tipo3   0x0000a5    program     static C:\Sofia\Programa PIC.asm
+                    Tipo4   0x00007d    program     static C:\Sofia\Programa PIC.asm
+                    Tipo5   0x000081    program     static C:\Sofia\Programa PIC.asm
+                    Tipo6   0x000085    program     static C:\Sofia\Programa PIC.asm
+                  TipoInt   0x000023    program     static C:\Sofia\Programa PIC.asm
+                   banco0   0x00014d    program     static C:\Sofia\Programa PIC.asm
+                   banco1   0x000150    program     static C:\Sofia\Programa PIC.asm
+                  delay16   0x000071    program     static C:\Sofia\Programa PIC.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+                     CONT   0x000020    program     static C:\Sofia\Programa PIC.asm
+                    PASOS   0x000021    program     static C:\Sofia\Programa PIC.asm
+                     TEMP   0x000022    program     static C:\Sofia\Programa PIC.asm
+                  TipoInt   0x000023    program     static C:\Sofia\Programa PIC.asm
+                      Aux   0x000024    program     static C:\Sofia\Programa PIC.asm
+                     Main   0x000025    program     static C:\Sofia\Programa PIC.asm
+           Inicializacion   0x000039    program     static C:\Sofia\Programa PIC.asm
+     AtencionInterrupcion   0x00005b    program     static C:\Sofia\Programa PIC.asm
+         AtencionSensores   0x000063    program     static C:\Sofia\Programa PIC.asm
+                  delay16   0x000071    program     static C:\Sofia\Programa PIC.asm
+               CheckAgain   0x000078    program     static C:\Sofia\Programa PIC.asm
+                    Tipo4   0x00007d    program     static C:\Sofia\Programa PIC.asm
+                    Tipo5   0x000081    program     static C:\Sofia\Programa PIC.asm
+                    Tipo6   0x000085    program     static C:\Sofia\Programa PIC.asm
+         RecibirDirectiva   0x000089    program     static C:\Sofia\Programa PIC.asm
+                    Tipo0   0x000099    program     static C:\Sofia\Programa PIC.asm
+                    Tipo1   0x00009d    program     static C:\Sofia\Programa PIC.asm
+                    Tipo2   0x0000a1    program     static C:\Sofia\Programa PIC.asm
+                    Tipo3   0x0000a5    program     static C:\Sofia\Programa PIC.asm
+                 Adelante   0x0000a9    program     static C:\Sofia\Programa PIC.asm
+        SubrutinaAdelante   0x0000ae    program     static C:\Sofia\Programa PIC.asm
+                    Atras   0x0000b5    program     static C:\Sofia\Programa PIC.asm
+           SubrutinaAtras   0x0000ba    program     static C:\Sofia\Programa PIC.asm
+                  Detener   0x0000c1    program     static C:\Sofia\Programa PIC.asm
+     LiberarMotorTraccion   0x0000c5    program     static C:\Sofia\Programa PIC.asm
+                  Derecha   0x0000c8    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaDerecha   0x0000da    program     static C:\Sofia\Programa PIC.asm
+                Izquierda   0x0000e1    program     static C:\Sofia\Programa PIC.asm
+       SubrutinaIzquierda   0x0000f3    program     static C:\Sofia\Programa PIC.asm
+          LiberarMotorPaP   0x0000fa    program     static C:\Sofia\Programa PIC.asm
+                    Paso1   0x0000fd    program     static C:\Sofia\Programa PIC.asm
+                    Paso2   0x000102    program     static C:\Sofia\Programa PIC.asm
+                    Paso3   0x000107    program     static C:\Sofia\Programa PIC.asm
+                    Paso4   0x00010c    program     static C:\Sofia\Programa PIC.asm
+                   Espera   0x000111    program     static C:\Sofia\Programa PIC.asm
+                EsperaPaP   0x00011e    program     static C:\Sofia\Programa PIC.asm
+                     Test   0x000127    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaObstDer   0x00012c    program     static C:\Sofia\Programa PIC.asm
+         SubrutinaObstIzq   0x000133    program     static C:\Sofia\Programa PIC.asm
+          SubrutinaSonido   0x00013a    program     static C:\Sofia\Programa PIC.asm
+            EsperaNotific   0x000140    program     static C:\Sofia\Programa PIC.asm
+                   banco0   0x00014d    program     static C:\Sofia\Programa PIC.asm
+                   banco1   0x000150    program     static C:\Sofia\Programa PIC.asm
+
+

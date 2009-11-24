@@ -11,7 +11,6 @@
 	include "p16f877a.inc"
 	list p=16f877a
 	ERRORLEVEL 1,-302
-	__CONFIG _WDT_OFF
 
 
 	ORG 0x00
@@ -29,10 +28,11 @@ PASOS
 TEMP							;Variable temporal
 	ORG 0x23
 TipoInt							;Variable auxiliar para grabar el tipo de interrupción
+	ORG 0x24
+Aux
 
 	ORG 0x25
 Main
-
 	call 	Inicializacion
 	sleep
 	nop
@@ -100,6 +100,7 @@ Inicializacion
 
 	clrf	CONT		;Pongo en cero el contador
 	clrf	TEMP		;Pongo en cero la variable temporal
+	clrf	Aux			;Pongo en cero la variable Aux
 	clrf	TipoInt		;Pongo en cero la variable para el tipo de interrupción
 	movlw	b'00001111'
 	movwf	PASOS		;Seteo en 3 la cantidad de pasos (Es necesario ajustarlo)
@@ -393,8 +394,8 @@ Paso4
 	bcf		PORTC,7
 	return
 
-;Rutina de espera
-;Se utilizará el Timer 2 ya que es el que tiene Prescaler y Postscaler
+
+;Rutinas de espera
 
 Espera
 	call	banco1
@@ -406,7 +407,10 @@ Espera
 	movwf	T2CON
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
-	return		
+	decf	Aux,1			;Decremento Aux
+	btfss	STATUS,2		;Me fijo si Aux llegó a 0
+	goto	Espera			;Si no llegò a 0 vuelvo a esperar
+	return					;Si llegó a 0 regreso
 
 
 EsperaPaP
@@ -415,9 +419,7 @@ EsperaPaP
 	movwf	PR2				;Escribimos 200 en PR2 para que TMR2 incremente hasta 200
 	call	banco0
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
-	movlw	b'00000011'
-	movwf	T2CON
-;	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
+	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return
@@ -467,7 +469,12 @@ EsperaNotific				;CONFIGURAR EL TIEMPO DE ESPERA NECESARIO
 	movwf	T2CON
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
-	return		
+	decf	Aux,1			;Decremento la variable Aux
+	btfss	STATUS,2		;Me fijo si llegó a cero
+	goto	EsperaNotific	;Si no llegó a 0 vuelvo a esperar
+	return					;Si llegò a 0 regreso
+
+
 
 
 banco0
