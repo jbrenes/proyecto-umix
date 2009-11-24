@@ -1,0 +1,932 @@
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;ModMovimiento.asm
+                      00002 ;PROGRAMA PARA CONTROLAR EL MOVIMIENTO DEL CARRO
+                      00003 ;**********************************************************
+                      00004 ;*  Microchip Technology Incorporated
+                      00005 ;*  PIC 16F877A
+                      00006 ;**********************************************************
+                      00007 
+                      00008 
+                      00009         
+                      00010 ; Include file, change directory if needed
+                      00011         include "p16f877a.inc"
+                      00001         LIST
+                      00002 ; P16F877A.INC  Standard Header File, Version 1.00    Microchip Technology, Inc.
+                      00398         LIST
+                      00012         list p=16f877a
+                      00013         ERRORLEVEL 1,-302
+                      00014 
+                      00015 
+                      00016         ORG 0x00
+0000   2???           00017         goto    Main
+                      00018 
+                      00019         ORG 0x04
+0004   2???           00020         goto    AtencionInterrupcion
+                      00021         
+                      00022 
+                      00023         ORG 0x20
+0020                  00024 CONT
+                      00025         ORG 0x21
+0021                  00026 PASOS
+                      00027         ORG 0x22
+0022                  00028 TEMP                                                    ;Variable temporal
+                      00029         ORG 0x23
+0023                  00030 TipoInt                                                 ;Variable auxiliar para grabar el tipo de interr
+                            upción
+                      00031         ORG 0x24
+0024                  00032 Aux
+                      00033 
+                      00034         ORG 0x25
+0025                  00035 Main
+0025   2???           00036         call    Inicializacion
+0026   0063           00037         sleep
+0027   0000           00038         nop
+                      00039 ;       goto    AtencionInterrupcion    ;SOLO PARA DEBUG
+0028   2???           00040         call    banco0
+0029   018B           00041         clrf    INTCON                          ;Deshabilito interrupciones
+002A   1800           00042         btfsc   TipoInt,0                       ;Me fijo si me enviaron Adelante
+002B   2???           00043         goto    SubrutinaAdelante       ;Si, entonces ejecuto SubrutinaAdelante
+002C   1880           00044         btfsc   TipoInt,1                       ;No, entonces me fijo si me enviaron Atrás
+002D   2???           00045         goto    SubrutinaAtras          ;Si, entonces ejecuto SubrutinaAtras
+002E   1900           00046         btfsc   TipoInt,2                       ;No, entonces me fijo si me enviaron Derecha
+002F   2???           00047         goto    SubrutinaDerecha        ;Si, entonces ejecuto SubrutinaDerecha
+0030   1980           00048         btfsc   TipoInt,3                       ;No, entonces me fijo si me enviaron Izquierda
+0031   2???           00049         goto    SubrutinaIzquierda      ;Si, entonces ejecuto SubrutinaIzquierda
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0032   1A00           00050         btfsc   TipoInt,4                       ;No, entonces me fijo si se detectó un obstáculo en la d
+                            erecha
+0033   2???           00051         goto    SubrutinaObstDer        ;Si, entonces ejecuto SubrutinaObstDer
+0034   1A80           00052         btfsc   TipoInt,5                       ;No, entonces me fijo si se detectó un obstáculo en la i
+                            zquierda
+0035   2???           00053         goto    SubrutinaObstIzq        ;Si, entonces ejecuto SubrutinaObstIzq
+0036   1B00           00054         btfsc   TipoInt,6                       ;No, entonces me fijo si se detectó un sonido
+0037   2???           00055         goto    SubrutinaSonido         ;Si, entonces ejecuto SubrutinaSonido
+0038   2???           00056         goto    Main                            ;No, entonces vuelvo a Main
+                      00057 
+                      00058 
+                      00059 ;Loop                   ;SOLO PARA DEBUG
+                      00060 
+                      00061 ;       call    Adelante
+                      00062 ;       call    Espera
+                      00063 ;       call    Derecha
+                      00064 ;       call    Espera
+                      00065 ;       call    Izquierda
+                      00066 ;       call    Espera
+                      00067 ;       call    Detener
+                      00068 ;       call    Espera
+                      00069 ;       call    Atras
+                      00070 ;       call    Espera
+                      00071 ;       call    Detener
+                      00072 ;       call    LiberarMotorTraccion
+                      00073 ;       goto    Loop
+                      00074 
+                      00075         
+0039                  00076 Inicializacion
+0039   2???           00077         call    banco1
+003A   30FF           00078         movlw   b'11111111' 
+003B   0085           00079         movwf   TRISA           ;Configuramos el puerto A como entrada (Por ahora no lo vamos a usar)
+                      00080         
+003C   3071           00081         movlw   b'01110001'     ;Configuramos los bits RB0 y RB4:RB6 como entradas y el resto como salid
+                            as,
+003D   0086           00082         movwf   TRISB                   ;vamos a utilizar las entradas para la interrupción para recibir
+                             directivas (RB0) y para los sensores (RB4:RB6)
+                      00083                                                         ;y las salidas RB1 y RB2 para volver a poner en 
+                            cero los flip-flops asociados a los sensores de obstáculos.
+                      00084 
+003E   3000           00085         movlw   b'00000000' 
+003F   0087           00086         movwf   TRISC           ;Configuramos el puerto C como salida, lo utilizaremos para manejar los 
+                            motores.
+                      00087         
+0040   300F           00088         movlw   b'00001111'
+0041   0088           00089         movwf   TRISD           ;Configuramos los bits RD0:RD3 como entrada (directivas de movimiento) y
+                             el resto como salidas (los bits RD5:RD7 se utilizan 
+                      00090                                                 ;para reportarle a la placa condiciones positivas en los
+                             sensores).
+                      00091 
+0042   2???           00092         call    banco0          ;Nos posicionamos en el banco 0
+0043   018B           00093         clrf    INTCON          ;Deshabilitamos todas las interrupciones
+0044   0188           00094         clrf    PORTD           ;Borra el puerto D
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0045   0187           00095         clrf    PORTC           ;Borra el puerto C
+0046   1486           00096         bsf             PORTB,1         ;Restea flip-flop asociado al sensor derecho
+0047   1506           00097         bsf             PORTB,2         ;Restea flip-flop asociado al sensor izquierdo
+0048   0186           00098         clrf    PORTB           ;Borra el puerto B
+0049   0185           00099         clrf    PORTA           ;Borra el puerto A      
+                      00100 
+004A   01??           00101         clrf    CONT            ;Pongo en cero el contador
+004B   01??           00102         clrf    TEMP            ;Pongo en cero la variable temporal
+004C   01??           00103         clrf    Aux                     ;Pongo en cero la variable Aux
+004D   01??           00104         clrf    TipoInt         ;Pongo en cero la variable para el tipo de interrupción
+004E   300F           00105         movlw   b'00001111'
+004F   00??           00106         movwf   PASOS           ;Seteo en 3 la cantidad de pasos (Es necesario ajustarlo)
+0050   2???           00107         call    banco1
+0051   3006           00108         movlw   0x06 
+0052   009F           00109         movwf   ADCON1          ;set puerto analógico como digital 
+0053   1701           00110         bsf             OPTION_REG,6    ;Configuramos flanco ascendente para la interrupción en RB0.    
+                      00111 ;       bcf             OPTION_REG,7    ;Habilitamos pull-ups
+                      00112         
+0054   2???           00113         call    banco0
+0055   0186           00114         clrf    PORTB                   ;Limpio el puerto B
+0056   118B           00115         bcf     INTCON,RBIE             ;Deshabilitamos la interrupción al cambiar RB4:RB7
+0057   0806           00116         movf    PORTB,W                 ;Leemos el puerto B
+0058   3098           00117         movlw   b'10011000'             ;Habilitamos interrupciones globales, interrupción externa de RB
+                            0 e interrupción RB port change
+0059   008B           00118         movwf   INTCON                  ;y limpiamos los flags
+                      00119         
+005A   0008           00120         return
+                      00121 
+005B                  00122 AtencionInterrupcion
+005B   2???           00123         call    banco0
+005C   138B           00124         bcf             INTCON,GIE                      ;Deshabilito interrupciones globales
+005D   180B           00125         btfsc   INTCON,RBIF             ;La interrupción fue por un cambio en RB4:RB7?
+005E   2???           00126         goto    AtencionSensores        ;Si, entonces voy a la rutina de atención correspondiente 
+005F   188B           00127         btfsc   INTCON,INTF             ;No, entonces me fijo si la interrupción fue porque la placa BB 
+                            va a enviar una directiva.
+0060   2???           00128         goto    RecibirDirectiva        ;Si, entonces veo qué directiva me envió la placa
+0061   138B           00129         bcf             INTCON,GIE                      ;No, entonces vuelvo a habilitar interrupciones 
+                            globales
+0062   0009           00130         retfie                                          ;y regreso a donde estaba antes de la interrupci
+                            ón
+                      00131 
+                      00132 
+0063                  00133 AtencionSensores
+0063   2???           00134         call    banco0
+0064   118B           00135         bcf     INTCON,RBIE ;Deshabilito interrupción RB port change
+                      00136 ;       movf    PORTB,W         ;Leo el puerto B
+0065   100B           00137         bcf     INTCON,RBIF ;Pongo en cero el flag correspondiente a la interrupción RB port change
+                      00138 ;       call    delay16         ;do de-bounce for 16mSecs  VER SI ES NECESARIO
+0066   0806           00139         movf    PORTB,W         ;Vuelvo a leer el puerto B
+0067   00??           00140         movwf   TEMP            ;Pongo lo leído en la variable temporal
+0068   1A06           00141         btfsc   PORTB,4         ;Me fijo si fue el Sensor de obstáculos Derecho
+0069   2???           00142         goto    Tipo4           ;Si, entonces voy a Tipo4
+006A   1A86           00143         btfsc   PORTB,5         ;No, entonces me fijo si fue el Sensor de obstáculos Izquierdo
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+006B   2???           00144         goto    Tipo5           ;Si, entonces voy a Tipo5
+006C   1B06           00145         btfsc   PORTB,6         ;No, entonces me fijo si fue el Sensor de Sonido
+006D   2???           00146         goto    Tipo6           ;Si, entonces voy a Tipo6
+                      00147 
+006E   158B           00148         bsf             INTCON,RBIE     ;No, entonces vuelvo a habilitar la interrupción RB port change,
+006F   178B           00149         bsf             INTCON,GIE      ;vuelvo a habilitar las interrupciones globales
+0070   0009           00150         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00151 
+                      00152 
+0071                  00153 delay16
+0071   2???           00154         call    banco1
+0072   3007           00155         movlw   b'00000111' ;fosc/256 --> TMR0
+0073   0081           00156         movwf   OPTION_REG ; /
+0074   2???           00157         call    banco0
+0075   0181           00158         clrf    TMR0
+0076   110B           00159         bcf     INTCON,T0IF ;clear flag
+0077   168B           00160         bsf     INTCON,T0IE ;enable mask
+0078                  00161 CheckAgain
+0078   1D0B           00162         btfss   INTCON,T0IF ;timer overflowed?
+0079   2???           00163         goto    CheckAgain ;no check again
+007A   128B           00164         bcf     INTCON,T0IE ;else clear mask
+007B   110B           00165         bcf     INTCON,T0IF ;clear flag
+007C   0008           00166         return  
+                      00167 
+007D                  00168 Tipo4
+007D   1600           00169         bsf             TipoInt,4       ;Seteo el flag 4 de la variable TipoInt
+007E   158B           00170         bsf             INTCON,RBIE     ;Vuelvo a habilitar la interrupicón RB port change
+007F   178B           00171         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+0080   0009           00172         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00173         
+0081                  00174 Tipo5
+0081   1680           00175         bsf             TipoInt,5       ;Seteo el flag 5 de la variable TipoInt
+0082   158B           00176         bsf             INTCON,RBIE     ;Vuelvo a habilitar la interrupicón RB port change
+0083   178B           00177         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+0084   0009           00178         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00179 
+0085                  00180 Tipo6
+0085   1700           00181         bsf             TipoInt,6       ;Seteo el flag 6 de la variable TipoInt
+0086   158B           00182         bsf             INTCON,RBIE     ;Vuelvo a habilitar la interrupicón RB port change
+0087   178B           00183         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+0088   0009           00184         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00185 
+                      00186 
+                      00187 
+0089                  00188 RecibirDirectiva
+0089   2???           00189         call    banco0
+008A   120B           00190         bcf     INTCON,INTE ;Deshabilito interrupción externa de RB0
+008B   0806           00191         movf    PORTB,W         ;Leo el puerto B
+008C   00??           00192         movwf   TEMP            ;Pongo lo leído en la variable temporal
+008D   108B           00193         bcf     INTCON,INTF ;Pongo en cero el flag correspondiente a la interrupción externa de RB0
+008E   1808           00194         btfsc   PORTD,0         ;Testeo si me enviaron Adelante
+008F   2???           00195         goto    Tipo0           ;Si, entonces voy a Tipo0
+0090   1888           00196         btfsc   PORTD,1         ;No, entonces testeo si me enviaron Atrás
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0091   2???           00197         goto    Tipo1           ;Si, entonces voy a Tipo1
+0092   1908           00198         btfsc   PORTD,2         ;No, entonces testeo si me enviaron Derecha
+0093   2???           00199         goto    Tipo2           ;Si, entonces voy a Tipo2
+0094   1988           00200         btfsc   PORTD,3         ;No, entonces testeo si me enviaron Izquierda
+0095   2???           00201         goto    Tipo3           ;Si, entonces voy a Tipo3
+0096   160B           00202         bsf             INTCON,INTE     ;No, entonces vuelvo a habilitar la interrupción externa de RB0,
+0097   138B           00203         bcf             INTCON,GIE      ;vuelvo a habilitar interrupciones globales
+0098   0009           00204         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00205 
+0099                  00206 Tipo0
+0099   1400           00207         bsf             TipoInt,0       ;Seteo el flag 0 de la variable TipoInt
+009A   160B           00208         bsf             INTCON,INTE     ;Vuelvo a habilitar la interrupicón externa de RB0
+009B   178B           00209         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+009C   0009           00210         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00211 
+009D                  00212 Tipo1
+009D   1480           00213         bsf             TipoInt,1       ;Seteo el flag 1 de la variable TipoInt
+009E   160B           00214         bsf             INTCON,INTE     ;Vuelvo a habilitar la interrupicón externa de RB0
+009F   178B           00215         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+00A0   0009           00216         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00217 
+00A1                  00218 Tipo2
+00A1   1500           00219         bsf             TipoInt,2       ;Seteo el flag 2 de la variable TipoInt
+00A2   160B           00220         bsf             INTCON,INTE     ;Vuelvo a habilitar la interrupicón externa de RB0
+00A3   178B           00221         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+00A4   0009           00222         retfie                          ;y regreso a donde estaba antes de la interrupción
+                      00223 
+00A5                  00224 Tipo3
+00A5   1580           00225         bsf             TipoInt,3       ;Seteo el flag 3 de la variable TipoInt
+00A6   160B           00226         bsf             INTCON,INTE     ;Vuelvo a habilitar la interrupicón externa de RB0
+00A7   178B           00227         bsf             INTCON,GIE      ;Vuelvo a habilitar interrupciones globales
+00A8   0009           00228         retfie                          ;y regreso a donde estaba antes de la interrupción      
+                      00229 
+                      00230 
+                      00231 
+                      00232 ;*******************************************************************************************************
+                            ***********************
+                      00233 ;Control del motor de Continua (Tracción)
+                      00234 ;
+                      00235 ;Para controlas el motor de continua se utilizarán dos canales de un driver L293D.
+                      00236 ;Se conectarán 3 pines del puerto B: RC0, RC1 y RC2 a los pines Enable1, Input1 e Input2 del L293D respe
+                            ctivamente.
+                      00237 ;Cuando RC0 esté en 1 el puente 1 del L293D estará habilitado, en caso contrario dicho puente quedará de
+                            shabilitado
+                      00238 ;por lo que el motor quedará libre.
+                      00239 ;Estando el puente 1 del L293D habilitado: si RC1 = 1 y RC2 = 0 el motor girará en un sentido (hacia ade
+                            lante)
+                      00240 ;si RC1 = 0 y RC2 = 1 el motor girará en sentido contrario (hacia atrás) y si RC1 = RC2 el motor estará 
+                            detenido.
+                      00241 ;*******************************************************************************************************
+                            *************************
+                      00242 
+00A9                  00243 Adelante
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00A9   2???           00244         call    banco0
+00AA   1407           00245         bsf             PORTC,0         ;Habilitamos canales del L293D (Tomamos el control del motor)
+00AB   1487           00246         bsf             PORTC,1         ;Seteamos el bit RC1
+00AC   1107           00247         bcf             PORTC,2         ;Ponemos en cero el bit RC2
+00AD   0008           00248         return
+                      00249         
+00AE                  00250 SubrutinaAdelante
+00AE   2???           00251         call    banco0
+00AF   1000           00252         bcf             TipoInt,0       ;Limpio el flag de TipoInt
+00B0   2???           00253         call    Adelante
+00B1   2???           00254         call    Espera
+00B2   2???           00255         call    Detener
+00B3   2???           00256         call    LiberarMotorTraccion    
+00B4   2???           00257         goto    Main            
+                      00258 
+                      00259 
+00B5                  00260 Atras
+00B5   2???           00261         call    banco0
+00B6   1407           00262         bsf             PORTC,0         ;Habilitamos canales (Tomamos el control del motor)
+00B7   1087           00263         bcf             PORTC,1         ;Ponemos en cero el bit RC1
+00B8   1507           00264         bsf             PORTC,2         ;Seteamos el bit RC2
+00B9   0008           00265         return
+                      00266 
+00BA                  00267 SubrutinaAtras
+00BA   2???           00268         call    banco0
+00BB   1080           00269         bcf             TipoInt,1       ;Limpio el flag de TipoInt
+00BC   2???           00270         call    Atras
+00BD   2???           00271         call    Espera
+00BE   2???           00272         call    Detener
+00BF   2???           00273         call    LiberarMotorTraccion
+00C0   2???           00274         goto    Main
+                      00275 
+00C1                  00276 Detener
+00C1   2???           00277         call    banco0
+00C2   1087           00278         bcf             PORTC,1         ;Ponemos en cero el bit RC1
+00C3   1107           00279         bcf             PORTC,2         ;Ponemos en cero el bit RC2
+00C4   0008           00280         return
+                      00281 
+00C5                  00282 LiberarMotorTraccion
+00C5   2???           00283         call    banco0
+00C6   1007           00284         bcf             PORTC,0         ;Deshabilitamos canales del L293B (Liberamos el motor)
+00C7   0008           00285         return
+                      00286 
+                      00287 
+                      00288 ;*******************************************************************************************************
+                            *******************
+                      00289 ;Control del motor Paso a Paso (Dirección)
+                      00290 ;
+                      00291 ;Para controlar la dirección del carro se utilizará un motor PaP bipolar. Para controlar este tipo de mo
+                            tores es necesario
+                      00292 ;invertir las polaridades de los terminales de las bobinas en una determinada secuencia para lograr un g
+                            iro en un sentido y
+                      00293 ;en secuencia opuesta para que gire en el otro sentido.
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00294 ;Se utilizará un driver L293D.
+                      00295 ;Se conectará el pin RC3 a los pines Enable1 y Enable2 del L293D. Con el bit RC3 se habilitarán/deshabil
+                            itarán los puentes del L293D.
+                      00296 ;Se conectará el pin RC4 al pin Input1 del L293D, el pin RC5 al pin Input2 del L293D, el pin RC6 al pin 
+                            Input3 del L293D
+                      00297 ;y el pin RC7 al pin Input4 del L293D.
+                      00298 ;Para controlar el motor se debe tener en cuenta la siguiente tabla:
+                      00299 ;
+                      00300 ;Num de Pasos           RC4                     RC5                     RC6                     RC7
+                      00301 ;Paso 1                         +Vcc            GND                     +Vcc            GND
+                      00302 ;Paso 2                         +Vcc            GND                     GND                     +Vcc
+                      00303 ;Paso 3                         GND                     +Vcc            GND                     +Vcc
+                      00304 ;Paso 4                         GND                     +Vcc            +Vcc            GND
+                      00305 
+00C8                  00306 Derecha
+00C8   1587           00307         bsf             PORTC,3         ;Tomamos el control del motor
+00C9   2???           00308         call    Paso1
+00CA   2???           00309         call    EsperaPaP
+00CB   2???           00310         call    Paso2
+00CC   2???           00311         call    EsperaPaP
+00CD   2???           00312         call    Paso3
+00CE   2???           00313         call    EsperaPaP
+00CF   2???           00314         call    Paso4
+00D0   2???           00315         call    EsperaPaP
+00D1   0A??           00316         incf    CONT,1                  ;Incrementamos el contador
+00D2   08??           00317         movf    PASOS,0                 ;Escribo la cantidad de pasos en W para que la secuencia 1-2-3-4
+                             se ejecute PASOS veces
+00D3   02??           00318         subwf   CONT,0                  ;Le resto W a CONT y lo almaceno en W
+00D4   1D03           00319         btfss   STATUS,2                ;Me fijo si la operacion dio 0
+00D5   2???           00320         goto    Derecha                 ;Si no dio 0, CONT aún no llegó a PASOS entonces repite
+00D6   1187           00321         bcf             PORTC,3                 ;Si dio 0, CONT llegó a PASOS entonces libero el motor,
+00D7   01??           00322         clrf    CONT                    ;pongo en 0 el contador,
+00D8   2???           00323         call    LiberarMotorPaP ;libero el motor
+00D9   0008           00324         return
+                      00325 
+00DA                  00326 SubrutinaDerecha
+00DA   2???           00327         call    banco0
+00DB   1100           00328         bcf             TipoInt,2       ;Limpio el flag de TipoInt      
+00DC   2???           00329         call    Adelante
+00DD   2???           00330         call    Derecha
+00DE   2???           00331         call    Detener
+00DF   2???           00332         call    LiberarMotorTraccion
+00E0   2???           00333         goto    Main
+                      00334 
+00E1                  00335 Izquierda
+00E1   1587           00336         bsf             PORTC,3                 ;Tomamos el control del motor
+00E2   2???           00337         call    Paso4
+00E3   2???           00338         call    EsperaPaP
+00E4   2???           00339         call    Paso3
+00E5   2???           00340         call    EsperaPaP
+00E6   2???           00341         call    Paso2
+00E7   2???           00342         call    EsperaPaP
+00E8   2???           00343         call    Paso1
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00E9   2???           00344         call    EsperaPaP
+00EA   0A??           00345         incf    CONT,1                  ;Incrementamos el contador
+00EB   08??           00346         movf    PASOS,0                 ;Escribo la cantidad de pasos en W para que la secuencia 4-3-2-1
+                             se ejecute PASOS veces
+00EC   02??           00347         subwf   CONT,0                  ;Le resto W a CONT y lo almaceno en W
+00ED   1D03           00348         btfss   STATUS,2                ;Me fijo si la operacion dio 0
+00EE   2???           00349         goto    Izquierda               ;Si no dio 0, CONT aún no llegó a PASOS entonces repite
+00EF   1187           00350         bcf             PORTC,3                 ;Si dio 0, CONT llegó a PASOS entonces libero el motor,
+00F0   01??           00351         clrf    CONT                    ;pongo en 0 el contador,
+00F1   2???           00352         call    LiberarMotorPaP ;libero el motor
+00F2   0008           00353         return
+                      00354 
+00F3                  00355 SubrutinaIzquierda
+00F3   2???           00356         call    banco0
+00F4   1180           00357         bcf             TipoInt,3               ;Limpio el flag de TipoInt
+00F5   2???           00358         call    Adelante
+00F6   2???           00359         call    Izquierda
+00F7   2???           00360         call    Detener
+00F8   2???           00361         call    LiberarMotorTraccion
+00F9   2???           00362         goto    Main
+                      00363 
+00FA                  00364 LiberarMotorPaP
+00FA   2???           00365         call    banco0
+00FB   1187           00366         bcf             PORTC,3                 ;Deshabilitamos canales del L293B (Liberamos el motor)
+00FC   0008           00367         return
+                      00368 
+00FD                  00369 Paso1
+00FD   1607           00370         bsf             PORTC,4
+00FE   1287           00371         bcf             PORTC,5
+00FF   1707           00372         bsf             PORTC,6
+0100   1387           00373         bcf             PORTC,7
+0101   0008           00374         return
+                      00375 
+0102                  00376 Paso2
+0102   1607           00377         bsf             PORTC,4
+0103   1287           00378         bcf             PORTC,5
+0104   1307           00379         bcf             PORTC,6
+0105   1787           00380         bsf             PORTC,7
+0106   0008           00381         return
+                      00382 
+0107                  00383 Paso3
+0107   1207           00384         bcf             PORTC,4
+0108   1687           00385         bsf             PORTC,5
+0109   1307           00386         bcf             PORTC,6
+010A   1787           00387         bsf             PORTC,7
+010B   0008           00388         return  
+                      00389 
+010C                  00390 Paso4
+010C   1207           00391         bcf             PORTC,4
+010D   1687           00392         bsf             PORTC,5
+010E   1707           00393         bsf             PORTC,6
+010F   1387           00394         bcf             PORTC,7
+0110   0008           00395         return
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00396 
+                      00397 
+                      00398 ;Rutinas de espera
+                      00399 
+0111                  00400 Espera
+0111   2???           00401         call    banco1
+0112   30FF           00402         movlw   0xFF
+0113   0092           00403         movwf   PR2                             ;Escribimos 255 en PR2 para que TMR2 incremente hasta 25
+                            5
+0114   2???           00404         call    banco0
+0115   0191           00405         clrf    TMR2                    ;Pongo en 0 el registro del timer 2
+0116   307B           00406         movlw   b'01111011'             ;Configuramos prescaler y postscaler 1:16
+0117   0092           00407         movwf   T2CON
+0118   1512           00408         bsf             T2CON,2                 ;Encendemos el Timer 2
+0119   2???           00409         call    Test                    ;Testeo si terminó la espera
+011A   03??           00410         decf    Aux,1                   ;Decremento Aux
+011B   1D03           00411         btfss   STATUS,2                ;Me fijo si Aux llegó a 0
+011C   2???           00412         goto    Espera                  ;Si no llegò a 0 vuelvo a esperar
+011D   0008           00413         return                                  ;Si llegó a 0 regreso
+                      00414 
+                      00415 
+011E                  00416 EsperaPaP
+011E   2???           00417         call    banco1
+011F   30C8           00418         movlw   b'11001000'             ;El período típico de conmutación del L298 son 40us
+0120   0092           00419         movwf   PR2                             ;Escribimos 200 en PR2 para que TMR2 incremente hasta 20
+                            0
+0121   2???           00420         call    banco0
+0122   0191           00421         clrf    TMR2                    ;Pongo en 0 el registro del timer 2
+0123   0192           00422         clrf    T2CON                   ;Configuramos prescaler y postscaler 1:1
+0124   1512           00423         bsf             T2CON,2                 ;Encendemos el Timer 2
+0125   2???           00424         call    Test                    ;Testeo si terminó la espera
+0126   0008           00425         return
+                      00426 
+                      00427 
+0127                  00428 Test
+0127   1C8C           00429         btfss   PIR1,1                  ;Terminó la espera?
+0128   2???           00430         goto    Test                    ;Si no terminó sigo esperando
+0129   108C           00431         bcf             PIR1,1                  ;Si terminó, limpio el flag
+012A   1112           00432         bcf             T2CON,2                 ;Apago el timer 2
+012B   0008           00433         return                                  ;y regreso
+                      00434 
+                      00435 
+012C                  00436 SubrutinaObstDer
+012C   2???           00437         call    banco0
+012D   1200           00438         bcf             TipoInt,4               ;Limpio el flag de TipoInt
+012E   1486           00439         bsf             PORTB,1                 ;Envío Reset al flip-flop
+012F   1608           00440         bsf             PORTD,4                 ;Notifico a la placa que se detectó un obstáculo del lad
+                            o derecho
+0130   2???           00441         call    EsperaNotific   ;Ejecuto rutina de espera para que la placa lea el dato
+0131   1208           00442         bcf             PORTD,4                 ;Limpio el bit RD4
+0132   2???           00443         goto    Main
+                      00444 
+0133                  00445 SubrutinaObstIzq
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0133   2???           00446         call    banco0
+0134   1280           00447         bcf             TipoInt,5               ;Limpio el flag de TipoInt
+0135   1506           00448         bsf             PORTB,2                 ;Envío Reset al flip-flop
+0136   1688           00449         bsf             PORTD,5                 ;Notifico a la placa que se detectó un obstáculo del lad
+                            o izquierdo
+0137   2???           00450         call    EsperaNotific   ;Ejecuto rutina de espera para que la placa lea el dato
+0138   1288           00451         bcf             PORTD,5                 ;Limpio el bit RD5
+0139   2???           00452         goto    Main
+                      00453 
+013A                  00454 SubrutinaSonido
+013A   2???           00455         call    banco0
+013B   1300           00456         bcf             TipoInt,6               ;Limpio el flag de TipoInt
+013C   1708           00457         bsf             PORTD,6                 ;Notifico a la placa que se detectó un sonido
+013D   2???           00458         call    EsperaNotific   ;Ejecuto rutina de espera para que la placa lea el dato
+013E   1308           00459         bcf             PORTD,6                 ;Limpio el bit RD6
+013F   2???           00460         goto    Main
+                      00461 
+0140                  00462 EsperaNotific                           ;CONFIGURAR EL TIEMPO DE ESPERA NECESARIO
+0140   2???           00463         call    banco1
+0141   30FF           00464         movlw   0xFF
+0142   0092           00465         movwf   PR2                             ;Escribimos 255 en PR2 para que TMR2 incremente hasta 25
+                            5
+0143   2???           00466         call    banco0
+0144   0191           00467         clrf    TMR2                    ;Pongo en 0 el registro del timer 2
+0145   307B           00468         movlw   b'01111011'             ;Configuramos prescaler y postscaler 1:16
+0146   0092           00469         movwf   T2CON
+0147   1512           00470         bsf             T2CON,2                 ;Encendemos el Timer 2
+0148   2???           00471         call    Test                    ;Testeo si terminó la espera
+0149   03??           00472         decf    Aux,1                   ;Decremento la variable Aux
+014A   1D03           00473         btfss   STATUS,2                ;Me fijo si llegó a cero
+014B   2???           00474         goto    EsperaNotific   ;Si no llegó a 0 vuelvo a esperar
+014C   0008           00475         return                                  ;Si llegò a 0 regreso
+                      00476 
+                      00477 
+                      00478 
+                      00479 
+014D                  00480 banco0
+014D   1303           00481         bcf     STATUS,RP1
+014E   1283           00482         bcf     STATUS,RP0
+014F   0008           00483         return
+                      00484 
+0150                  00485 banco1
+0150   1303           00486         bcf     STATUS,RP1
+0151   1683           00487         bsf     STATUS,RP0
+0152   0008           00488         return
+                      00489 
+                      00490 
+Warning[205]: Found directive in column 1. (end)
+                      00491 end
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            0000001F
+ADCON1                            0000009F
+ADCS0                             00000006
+ADCS1                             00000007
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+Adelante                          000000A9
+AtencionInterrupcion              0000005B
+AtencionSensores                  00000063
+Atras                             000000B5
+Aux                               00000024
+BCLIE                             00000003
+BCLIF                             00000003
+BF                                00000000
+BRGH                              00000002
+C                                 00000000
+C1INV                             00000004
+C1OUT                             00000006
+C2INV                             00000005
+C2OUT                             00000007
+CCP1CON                           00000017
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2CON                           0000001D
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1H                            00000016
+CCPR1L                            00000015
+CCPR2H                            0000001C
+CCPR2L                            0000001B
+CHS0                              00000003
+CHS1                              00000004
+CHS2                              00000005
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CIS                               00000003
+CKE                               00000006
+CKP                               00000004
+CM0                               00000000
+CM1                               00000001
+CM2                               00000002
+CMCON                             0000009C
+CMIE                              00000006
+CMIF                              00000006
+CONT                              00000020
+CREN                              00000004
+CSRC                              00000007
+CVR0                              00000000
+CVR1                              00000001
+CVR2                              00000002
+CVR3                              00000003
+CVRCON                            0000009D
+CVREN                             00000007
+CVROE                             00000006
+CVRR                              00000005
+CheckAgain                        00000078
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+D_A                               00000005
+Derecha                           000000C8
+Detener                           000000C1
+EEADR                             0000010D
+EEADRH                            0000010F
+EECON1                            0000018C
+EECON2                            0000018D
+EEDATA                            0000010C
+EEDATH                            0000010E
+EEIE                              00000004
+EEIF                              00000004
+EEPGD                             00000007
+Espera                            00000111
+EsperaNotific                     00000140
+EsperaPaP                         0000011E
+F                                 00000001
+FERR                              00000002
+FSR                               00000004
+GCEN                              00000007
+GIE                               00000007
+GO                                00000002
+GO_DONE                           00000002
+I2C_DATA                          00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+IBF                               00000007
+IBOV                              00000005
+INDF                              00000000
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+IRP                               00000007
+Inicializacion                    00000039
+Izquierda                         000000E1
+LiberarMotorPaP                   000000FA
+LiberarMotorTraccion              000000C5
+Main                              00000025
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BO                            00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000002
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OBF                               00000006
+OERR                              00000001
+OPTION_REG                        00000081
+P                                 00000004
+PASOS                             00000021
+PCFG0                             00000000
+PCFG1                             00000001
+PCFG2                             00000002
+PCFG3                             00000003
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PEIE                              00000006
+PEN                               00000002
+PIE1                              0000008C
+PIE2                              0000008D
+PIR1                              0000000C
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
+PORTD                             00000008
+PORTE                             00000009
+PR2                               00000092
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+PSPIE                             00000007
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PSPIF                             00000007
+PSPMODE                           00000004
+Paso1                             000000FD
+Paso2                             00000102
+Paso3                             00000107
+Paso4                             0000010C
+R                                 00000002
+RBIE                              00000003
+RBIF                              00000000
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIE                              00000005
+RCIF                              00000005
+RCREG                             0000001A
+RCSTA                             00000018
+RD                                00000000
+READ_WRITE                        00000002
+RP0                               00000005
+RP1                               00000006
+RSEN                              00000001
+RX9                               00000006
+RX9D                              00000000
+R_W                               00000002
+RecibirDirectiva                  00000089
+S                                 00000003
+SEN                               00000000
+SMP                               00000007
+SPBRG                             00000099
+SPEN                              00000007
+SREN                              00000005
+SSPADD                            00000093
+SSPBUF                            00000013
+SSPCON                            00000014
+SSPCON2                           00000091
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000094
+STATUS                            00000003
+SYNC                              00000004
+SubrutinaAdelante                 000000AE
+SubrutinaAtras                    000000BA
+SubrutinaDerecha                  000000DA
+SubrutinaIzquierda                000000F3
+SubrutinaObstDer                  0000012C
+SubrutinaObstIzq                  00000133
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SubrutinaSonido                   0000013A
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000012
+TEMP                              00000022
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1CS                            00000001
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TMR2                              00000011
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2ON                            00000002
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000085
+TRISB                             00000086
+TRISC                             00000087
+TRISD                             00000088
+TRISE                             00000089
+TRISE0                            00000000
+TRISE1                            00000001
+TRISE2                            00000002
+TRMT                              00000001
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXREG                             00000019
+TXSTA                             00000098
+Test                              00000127
+Tipo0                             00000099
+Tipo1                             0000009D
+MPASM  4.02 Released                         PROGRAMA PIC.ASM   11-24-2009  19:05:23         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+Tipo2                             000000A1
+Tipo3                             000000A5
+Tipo4                             0000007D
+Tipo5                             00000081
+Tipo6                             00000085
+TipoInt                           00000023
+UA                                00000001
+W                                 00000000
+WCOL                              00000007
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+Z                                 00000002
+_BODEN_OFF                        00003FBF
+_BODEN_ON                         00003FFF
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003EFF
+_CP_ALL                           00001FFF
+_CP_OFF                           00003FFF
+_DEBUG_OFF                        00003FFF
+_DEBUG_ON                         000037FF
+_HS_OSC                           00003FFE
+_LP_OSC                           00003FFC
+_LVP_OFF                          00003F7F
+_LVP_ON                           00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FF7
+_RC_OSC                           00003FFF
+_WDT_OFF                          00003FFB
+_WDT_ON                           00003FFF
+_WRT_1FOURTH                      00003BFF
+_WRT_256                          00003DFF
+_WRT_HALF                         000039FF
+_WRT_OFF                          00003FFF
+_XT_OSC                           00003FFD
+__16F877A                         00000001
+banco0                            0000014D
+banco1                            00000150
+delay16                           00000071
+
+Errors   :     0
+Warnings :     1 reported,     0 suppressed
+Messages :     0 reported,    10 suppressed
+
+
