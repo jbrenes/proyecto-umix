@@ -1,4 +1,4 @@
-;ModMovimiento.asm
+
 ;PROGRAMA PARA CONTROLAR EL MOVIMIENTO DEL CARRO
 ;**********************************************************
 ;*  Microchip Technology Incorporated
@@ -27,9 +27,9 @@ CONT
 	ORG 0x21
 PASOS
 	ORG 0x22
-TEMP							;Variable temporal
+TEMP			;Variable temporal
 	ORG 0x23
-TipoInt							;Variable auxiliar para grabar el tipo de interrupción
+TipoInt		;Variable auxiliar para grabar el tipo de interrupción
 
 
 	ORG 0x25
@@ -340,19 +340,11 @@ Izquierda
 	bsf		PORTC,3			;Tomamos el control del motor
 	call	Paso4
 	call	EsperaPaP
-	call	EsperaPaP
-	call	EsperaPaP
 	call	Paso3
-	call	EsperaPaP
-	call	EsperaPaP
 	call	EsperaPaP
 	call	Paso2
 	call	EsperaPaP
-	call	EsperaPaP
-	call	EsperaPaP
 	call	Paso1
-	call	EsperaPaP
-	call	EsperaPaP
 	call	EsperaPaP
 	incf	CONT,1			;Incrementamos el contador
 	movf	PASOS,0			;Escribo la cantidad de pasos en W para que la secuencia 4-3-2-1 se ejecute PASOS veces
