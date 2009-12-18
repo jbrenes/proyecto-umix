@@ -106,8 +106,8 @@ Inicializacion
 	movwf	Aux			;Seteo Aux en 50 para que el tiempo de espera para notificar
 						;a la BB sea de 2 seg aprox (HAY QUE AJUSTARLO)
 	clrf	TipoInt		;Pongo en cero la variable para el tipo de interrupción
-	movlw	b'00001111'
-	movwf	PASOS		;Seteo en 15 la cantidad de pasos (Es necesario ajustarlo)
+	movlw	b'00000111'
+	movwf	PASOS		;Seteo en 7 la cantidad de pasos (Es necesario ajustarlo)
 	call	banco1
 	movlw 	0x06 
 	movwf 	ADCON1 		;set puerto analógico como digital 
