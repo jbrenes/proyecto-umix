@@ -12,13 +12,19 @@ scrollbar-shadow-color:f0f0f0;
 scrollbar-face-color:f0f0f0;
 scrollbar-highlight-color:094588;
 scrollbar-darkshadow-color:094588;
+.Estilo1 {font-size: 18px}
+.Estilo6 {
+	font-size: 18px;
+	font-weight: bold;
+}
+.Estilo7 {font-size: 18; font-weight: bold; }
 </style>
 </head>
 <body topmargin="0" leftmargin="0" bottommargin="0" rightmargin="0">
 <table style="width: 100%;" border="0" cellpadding="0" cellspacing="0">
 <tbody>
 <tr>
-<td style="width: 100%; text-align: left; vertical-align: middle;"><img src="header.JPG" width="972" height="193"></td>
+<td style="width: 100%; text-align: left; vertical-align: middle;"><img src="header.JPG" alt="" width="972" height="193" align="texttop"></td>
 </tr>
 </tbody>
 </table>
@@ -172,29 +178,87 @@ scrollbar-darkshadow-color:094588;
 <tbody>
 <tr>
 <td width="100%">
-<p style="margin-left: 30px;">Thank you for
-downloading this template. This or any other template&nbsp;
-is&nbsp; free for personal use, but you must leave our link on this
-page.&nbsp;</p>
-<p style="margin-left: 30px; margin-right: 20px; margin-top: 10px;">Before
-using read&nbsp; our <a href="http://www.rickyswebtemplates.com/terms.htm">terms and
-conditions</a>.</p>
-<p style="margin-left: 30px; margin-right: 20px; margin-top: 10px;">Here
-you will find&nbsp; help about editing our templates and empty
-buttons and logos for editing: <a href="http://www.rickyswebtemplates.com/members/login.php">http://www.rickyswebtemplates.com/members/login.php</a>.
-We have created user guide with step by step instructions.</p>
-<p style="margin-left: 30px; margin-right: 20px; margin-top: 10px;" align="left">If you don't know how to edit our free
-templates, or you don't have time we can do&nbsp; that for you. For
-only <b>$10 USD</b>&nbsp; we will edit logo, buttons
-and create few pages the way you like it. You only have to put your
-text&nbsp; in it and your web page&nbsp; is done.</p>
-<p style="margin-left: 30px; margin-right: 20px; margin-top: 10px;" align="left">For more informations, <a href="http://www.rickyswebtemplates.com/contact.htm">contact
-us</a> : <a href="mailto:webmaster@rickyswebtemplates.com">webmaster@rickyswebtemplates.com</a></p>
-<p style="margin-left: 30px; margin-right: 20px; margin-top: 10px;">For
-more FREE web templates and other graphics visit our site: <a href="http://www.rickyswebtemplates.com">http://www.rickyswebtemplates.com</a>&nbsp;</p>
-<p style="margin-left: 30px; margin-right: 30px; margin-top: 0pt;"><br>
-</p>
-<p>&nbsp;</p>
+<table width="549" height="356" border="1" cellspacing="1">
+  <tr>
+    <td scope="col">
+    	<form name="frmRed" method="get" action="/scripts/cambiarRed.php">
+    		<p align="center" class="Estilo6">Red</p>
+           	<label>
+            	<div align="left">
+          			<p>Interfase
+            			<input type="text" name="interfaz" id="interfaz">
+          			</p>
+          			<p>&nbsp;</p>
+        		</div>
+        	</label>
+        	<label> 
+                <div align="left">
+        		  	<p>Dirección IP
+            			<input type="text" name="dirIP" id="dirIP">
+          			</p>
+          			<p>&nbsp; </p>
+        		</div>
+        	</label>
+           	<label>
+               	<div align="left">
+         			 <p>Máscara
+            			<input type="text" name="mask" id="mask">
+					</p>
+          			<p>&nbsp;
+                    </p>
+        		</div>
+        	</label>
+        	<label>
+            	<div align="left">
+          			<p>Gateway
+            			<input type="text" name="gateway" id="gateway">
+          			</p>
+          			<p>&nbsp;
+                    </p>
+        		</div>
+        	</label>
+        	<label>
+            	<div align="left">
+                	<p>Proxy
+            			<input type="text" name="proxy" id="proxy">
+          			</p>
+          			<p>&nbsp;
+                    </p>
+        		</div>
+        	</label>
+        	<label>
+          		<div align="center">
+            		<input type="submit" name="btnCambiarRed" id="btnCambiarRed" value="Aplicar">
+          		</div>
+                
+        	</label>
+         
+      </form>          
+      </td>
+  </tr>
+  <tr>
+    <td><div align="center">
+      <p class="Estilo7">Aplicaci&oacute;n</p>
+      <form name="form5" method="post" action="">
+        <label>
+        <div align="left">Base de Datos
+          <input type="text" name="baseDatos" id="baseDatos">
+        </div>
+        </label>
+      </form>
+      <p align="center"><strong></strong>
+        <input type="submit" name="btnCambiarBD" id="btnCambiarBD" value="Aplicar">
+      </p>
+      <form name="form7" method="post" action="">
+        <label></label>
+      </form>
+      </div></td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+<p style="margin-left: 30px;">&nbsp;</p>
 </td>
 </tr>
 </tbody>

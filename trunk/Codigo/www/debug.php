@@ -123,7 +123,7 @@ scrollbar-darkshadow-color:094588;
 <td style="height: 18px;" align="left" width="5%">
 <p style="margin-left: 25px;"><img src="tocka.gif" border="0" height="15" width="15"></p>
 </td>
-<td onMouseOver="this.bgColor = '#9FA3BC';" onMouseOut="this.bgColor = '#101B59';" bgcolor="#101b59" width="95%"><font color="#ffffff" face="Verdana" size="2"><a href="debug.htm" class="lijevi">Debug</a></font></td>
+<td onMouseOver="this.bgColor = '#9FA3BC';" onMouseOut="this.bgColor = '#101B59';" bgcolor="#101b59" width="95%"><font color="#ffffff" face="Verdana" size="2"><a href="debug.php" class="lijevi">Debug</a></font></td>
 </tr>
 <tr>
 <td style="height: 15px;" width="5%">&nbsp;</td>
@@ -162,11 +162,29 @@ scrollbar-darkshadow-color:094588;
 <tbody>
 <tr>
 <td width="100%">
-<p style="margin-left: 30px;">Acerca de...</p>
+<form name="form1" method="post" action="/scripts/secuencia.php">
+  <label>
+  <input type="submit" name="btnIniciarSecuencia" id="btnIniciarSecuencia" value="Iniciar Secuencia">
+  </label>
+</form>
+<form name="form2" method="post" action="/scripts/ejecutar.php">
+  <label>Comando
+  <input type="text" name="comando" id="comando">
+  </label>
+  <label>
+  <input type="submit" name="btnEjecComando" id="btnEjecComando" value="Ejecutar">
+  </label>
+</form>
+<p style="margin-left: 30px;">&nbsp;</p>
 <p style="margin-left: 30px; margin-right: 30px; margin-top: 0pt;"><br>
 </p>
-<p>&nbsp;</p>
-</td>
+<p>&nbsp;</p></td>
+</tr>
+<tr>
+  <td>
+  
+  Ultimo resultado : <?php 
+  echo $_GET['ultimo_resultado']; ?>  </td>
 </tr>
 </tbody>
 </table>

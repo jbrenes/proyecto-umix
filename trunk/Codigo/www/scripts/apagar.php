@@ -2,9 +2,9 @@
 <html><head><meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>apagar.php</title></head><body>&lt;?php<br>
 
 <br>
+;<br>
 
-$salida = shell_exec('./app/apagar');<br>
-
+$salida = shell_exec('./app/apagar')
 echo $salida;<br>
 
 <br>
