@@ -14,12 +14,14 @@
 
 
 	ORG 0x00
-	goto 	Main
+ 	goto 	Main
 
 	ORG 0x04
 	goto 	AtencionInterrupcion
 	
 
+	ORG 0x19
+Aux
 	ORG 0x20
 CONT
 	ORG 0x21
@@ -28,8 +30,7 @@ PASOS
 TEMP							;Variable temporal
 	ORG 0x23
 TipoInt							;Variable auxiliar para grabar el tipo de interrupción
-	ORG 0x24
-Aux
+
 
 	ORG 0x25
 Main
@@ -86,12 +87,13 @@ Inicializacion
 	movwf 	TRISC 		;Configuramos el puerto C como salida, lo utilizaremos para manejar los motores.
 	
 	movlw	b'00001111'
-	movwf	TRISD		;Configuramos los bits RD0:RD3 como entrada (directivas de movimiento) y el resto como salidas (los bits RD5:RD7 se utilizan 
+	movwf	TRISD		;Configuramos los bits RD0:RD3 como entrada (directivas de movimiento) y el resto como salidas (los bits RD4:RD6 se utilizan 
 						;para reportarle a la placa condiciones positivas en los sensores).
 
 	call 	banco0		;Nos posicionamos en el banco 0
 	clrf 	INTCON		;Deshabilitamos todas las interrupciones
 	clrf	PORTD		;Borra el puerto D
+	bsf		PORTD,7		;DEBUG
 	clrf	PORTC		;Borra el puerto C
 	bsf		PORTB,1		;Restea flip-flop asociado al sensor derecho
 	bsf		PORTB,2		;Restea flip-flop asociado al sensor izquierdo
@@ -100,15 +102,17 @@ Inicializacion
 
 	clrf	CONT		;Pongo en cero el contador
 	clrf	TEMP		;Pongo en cero la variable temporal
-	clrf	Aux			;Pongo en cero la variable Aux
+	movlw	b'00110010'
+	movwf	Aux			;Seteo Aux en 50 para que el tiempo de espera para notificar
+						;a la BB sea de 2 seg aprox (HAY QUE AJUSTARLO)
 	clrf	TipoInt		;Pongo en cero la variable para el tipo de interrupción
-	movlw	b'00001111'
-	movwf	PASOS		;Seteo en 3 la cantidad de pasos (Es necesario ajustarlo)
+	movlw	b'00001010'
+	movwf	PASOS		;Seteo en 7 la cantidad de pasos (Es necesario ajustarlo)
 	call	banco1
 	movlw 	0x06 
 	movwf 	ADCON1 		;set puerto analógico como digital 
 	bsf		OPTION_REG,6	;Configuramos flanco ascendente para la interrupción en RB0.	
-;	bcf		OPTION_REG,7	;Habilitamos pull-ups
+	bcf		OPTION_REG,7	;Habilitamos pull-ups
 	
 	call	banco0
 	clrf	PORTB			;Limpio el puerto B
@@ -121,12 +125,13 @@ Inicializacion
 
 AtencionInterrupcion
 	call	banco0
+	bsf		PORTB,3				;DEBUG
 	bcf		INTCON,GIE			;Deshabilito interrupciones globales
 	btfsc 	INTCON,RBIF 		;La interrupción fue por un cambio en RB4:RB7?
 	goto 	AtencionSensores 	;Si, entonces voy a la rutina de atención correspondiente 
 	btfsc	INTCON,INTF 		;No, entonces me fijo si la interrupción fue porque la placa BB va a enviar una directiva.
 	goto	RecibirDirectiva	;Si, entonces veo qué directiva me envió la placa
-	bcf		INTCON,GIE			;No, entonces vuelvo a habilitar interrupciones globales
+	bsf		INTCON,GIE			;No, entonces vuelvo a habilitar interrupciones globales
 	retfie						;y regreso a donde estaba antes de la interrupción
 
 
@@ -415,11 +420,13 @@ Espera
 
 EsperaPaP
 	call	banco1
-	movlw	b'11001000'		;El período típico de conmutación del L298 son 40us
-	movwf	PR2				;Escribimos 200 en PR2 para que TMR2 incremente hasta 200
+	movlw	b'11111111'		;El período típico de conmutación del L298 son 40us
+	movwf	PR2				;Escribimos 255 en PR2 para que TMR2 incremente hasta 255
 	call	banco0
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
-	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
+;	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
+	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
+	movwf	T2CON
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return
@@ -439,6 +446,7 @@ SubrutinaObstDer
 	bsf		PORTB,1			;Envío Reset al flip-flop
 	bsf		PORTD,4			;Notifico a la placa que se detectó un obstáculo del lado derecho
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
+	bcf		PORTB,1			;Apago el bit de reset	
 	bcf		PORTD,4			;Limpio el bit RD4
 	goto	Main
 
@@ -448,6 +456,7 @@ SubrutinaObstIzq
 	bsf		PORTB,2			;Envío Reset al flip-flop
 	bsf		PORTD,5			;Notifico a la placa que se detectó un obstáculo del lado izquierdo
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
+	bcf		PORTB,2			;Apago el bit de reset
 	bcf		PORTD,5			;Limpio el bit RD5
 	goto	Main
 
