@@ -52,8 +52,8 @@ Main
 	goto	SubrutinaObstDer	;Si, entonces ejecuto SubrutinaObstDer
 	btfsc	TipoInt,5			;No, entonces me fijo si se detectó un obstáculo en la izquierda
 	goto	SubrutinaObstIzq	;Si, entonces ejecuto SubrutinaObstIzq
-	btfsc	TipoInt,6			;No, entonces me fijo si se detectó un sonido
-	goto	SubrutinaSonido		;Si, entonces ejecuto SubrutinaSonido
+	btfsc	TipoInt,6			;No, entonces me fijo si se detectó luz IR
+	goto	SubrutinaIR		;Si, entonces ejecuto SubrutinaIR
 	goto	Main				;No, entonces vuelvo a Main
 
 
@@ -112,7 +112,7 @@ Inicializacion
 	movlw 	0x06 
 	movwf 	ADCON1 		;set puerto analógico como digital 
 	bsf		OPTION_REG,6	;Configuramos flanco ascendente para la interrupción en RB0.	
-	bcf		OPTION_REG,7	;Habilitamos pull-ups
+	;bcf		OPTION_REG,7	;Habilitamos pull-ups
 	
 	call	banco0
 	clrf	PORTB			;Limpio el puerto B
@@ -147,7 +147,7 @@ AtencionSensores
 	goto	Tipo4		;Si, entonces voy a Tipo4
 	btfsc	PORTB,5		;No, entonces me fijo si fue el Sensor de obstáculos Izquierdo
 	goto	Tipo5		;Si, entonces voy a Tipo5
-	btfsc	PORTB,6		;No, entonces me fijo si fue el Sensor de Sonido
+	btfsc	PORTB,6		;No, entonces me fijo si fue el Sensor IR
 	goto	Tipo6		;Si, entonces voy a Tipo6
 
 	bsf		INTCON,RBIE	;No, entonces vuelvo a habilitar la interrupción RB port change,
@@ -205,7 +205,7 @@ RecibirDirectiva
 	btfsc	PORTD,3		;No, entonces testeo si me enviaron Izquierda
 	goto	Tipo3		;Si, entonces voy a Tipo3
 	bsf		INTCON,INTE	;No, entonces vuelvo a habilitar la interrupción externa de RB0,
-	bcf		INTCON,GIE	;vuelvo a habilitar interrupciones globales
+	bsf		INTCON,GIE	;vuelvo a habilitar interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
 
 Tipo0
@@ -460,10 +460,10 @@ SubrutinaObstIzq
 	bcf		PORTD,5			;Limpio el bit RD5
 	goto	Main
 
-SubrutinaSonido
+SubrutinaIR
 	call	banco0
 	bcf		TipoInt,6		;Limpio el flag de TipoInt
-	bsf		PORTD,6			;Notifico a la placa que se detectó un sonido
+	bsf		PORTD,6			;Notifico a la placa que se detectó luz IR
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
 	bcf		PORTD,6			;Limpio el bit RD6
 	goto	Main
