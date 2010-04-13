@@ -39,7 +39,7 @@ Main
 	nop
 ;	goto 	AtencionInterrupcion	;SOLO PARA DEBUG
 	call	banco0
-	clrf	INTCON				;Deshabilito interrupciones
+;	clrf	INTCON				;Deshabilito interrupciones
 	btfsc	TipoInt,0			;Me fijo si me enviaron Adelante
 	goto	SubrutinaAdelante	;Si, entonces ejecuto SubrutinaAdelante
 	btfsc	TipoInt,1			;No, entonces me fijo si me enviaron Atrás
@@ -127,74 +127,63 @@ AtencionInterrupcion
 	call	banco0
 	bsf		PORTB,3				;DEBUG
 	bcf		INTCON,GIE			;Deshabilito interrupciones globales
+	bcf		INTCON,RBIE			;Deshabilito interrupcion RB port change
+	bcf		INTCON,INTE			;Deshabilito interrupcion externa
 	btfsc 	INTCON,RBIF 		;La interrupción fue por un cambio en RB4:RB7?
 	goto 	AtencionSensores 	;Si, entonces voy a la rutina de atención correspondiente 
 	btfsc	INTCON,INTF 		;No, entonces me fijo si la interrupción fue porque la placa BB va a enviar una directiva.
 	goto	RecibirDirectiva	;Si, entonces veo qué directiva me envió la placa
-	bsf		INTCON,GIE			;No, entonces vuelvo a habilitar interrupciones globales
+	bsf		INTCON,GIE			;No, entonces vuelvo a habilitar interrupciones globales,
+	bsf		INTCON,RBIE			;interrupcion RB port change e
+	bsf		INTCON,INTE			;interrupcion externa
 	retfie						;y regreso a donde estaba antes de la interrupción
 
 
 AtencionSensores
 	call	banco0
-	bcf 	INTCON,RBIE ;Deshabilito interrupción RB port change
-;	movf	PORTB,W		;Leo el puerto B
-	bcf 	INTCON,RBIF ;Pongo en cero el flag correspondiente a la interrupción RB port change
-;	call 	delay16 	;do de-bounce for 16mSecs  VER SI ES NECESARIO
-	movf	PORTB,W 	;Vuelvo a leer el puerto B
+	movf	PORTB,W 	;Leo el puerto B
 	movwf	TEMP		;Pongo lo leído en la variable temporal
-	btfsc	PORTB,4		;Me fijo si fue el Sensor de obstáculos Derecho
+	bcf 	INTCON,RBIF ;Pongo en cero el flag correspondiente a la interrupción RB port change
+	btfsc	TEMP,4		;Me fijo si fue el Sensor de obstáculos Derecho
 	goto	Tipo4		;Si, entonces voy a Tipo4
-	btfsc	PORTB,5		;No, entonces me fijo si fue el Sensor de obstáculos Izquierdo
+	btfsc	TEMP,5		;No, entonces me fijo si fue el Sensor de obstáculos Izquierdo
 	goto	Tipo5		;Si, entonces voy a Tipo5
-	btfsc	PORTB,6		;No, entonces me fijo si fue el Sensor IR
+	btfsc	TEMP,6		;No, entonces me fijo si fue el Sensor IR
 	goto	Tipo6		;Si, entonces voy a Tipo6
 
 	bsf		INTCON,RBIE	;No, entonces vuelvo a habilitar la interrupción RB port change,
-	bsf		INTCON,GIE	;vuelvo a habilitar las interrupciones globales
+	bsf		INTCON,INTE	;interrupcion externa e
+	bsf		INTCON,GIE	;interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
 
 
-delay16
-	call	banco1
-	movlw 	b'00000111' ;fosc/256 --> TMR0
-	movwf 	OPTION_REG ; /
-	call	banco0
-	clrf 	TMR0
-	bcf 	INTCON,T0IF ;clear flag
-	bsf 	INTCON,T0IE ;enable mask
-CheckAgain
-	btfss 	INTCON,T0IF ;timer overflowed?
-	goto 	CheckAgain ;no check again
-	bcf 	INTCON,T0IE ;else clear mask
-	bcf 	INTCON,T0IF ;clear flag
-	return	
-
 Tipo4
 	bsf		TipoInt,4	;Seteo el flag 4 de la variable TipoInt
-	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
 	
 Tipo5
 	bsf		TipoInt,5	;Seteo el flag 5 de la variable TipoInt
-	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 Tipo6
 	bsf		TipoInt,6	;Seteo el flag 6 de la variable TipoInt
-	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 
 
 RecibirDirectiva
 	call	banco0
-	bcf 	INTCON,INTE ;Deshabilito interrupción externa de RB0
-	movf	PORTB,W		;Leo el puerto B
-	movwf	TEMP		;Pongo lo leído en la variable temporal
 	bcf 	INTCON,INTF ;Pongo en cero el flag correspondiente a la interrupción externa de RB0
 	btfsc	PORTD,0		;Testeo si me enviaron Adelante
 	goto	Tipo0		;Si, entonces voy a Tipo0
@@ -204,33 +193,43 @@ RecibirDirectiva
 	goto	Tipo2		;Si, entonces voy a Tipo2
 	btfsc	PORTD,3		;No, entonces testeo si me enviaron Izquierda
 	goto	Tipo3		;Si, entonces voy a Tipo3
-	bsf		INTCON,INTE	;No, entonces vuelvo a habilitar la interrupción externa de RB0,
-	bsf		INTCON,GIE	;vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;No, entonces vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 Tipo0
 	bsf		TipoInt,0	;Seteo el flag 0 de la variable TipoInt
-	bsf		INTCON,INTE	;Vuelvo a habilitar la interrupicón externa de RB0
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 Tipo1
 	bsf		TipoInt,1	;Seteo el flag 1 de la variable TipoInt
-	bsf		INTCON,INTE	;Vuelvo a habilitar la interrupicón externa de RB0
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 Tipo2
 	bsf		TipoInt,2	;Seteo el flag 2 de la variable TipoInt
-	bsf		INTCON,INTE	;Vuelvo a habilitar la interrupicón externa de RB0
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
 	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 Tipo3
 	bsf		TipoInt,3	;Seteo el flag 3 de la variable TipoInt
-	bsf		INTCON,INTE	;Vuelvo a habilitar la interrupicón externa de RB0
-	bsf		INTCON,GIE	;Vuelvo a habilitar interrupciones globales
-	retfie				;y regreso a donde estaba antes de la interrupción	
+	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
+	bsf		INTCON,INTE ;interrupcion externa
+	bsf		INTCON,GIE	;e interrupciones globales
+	retfie				;y regreso a donde estaba antes de la interrupción
+
 
 
 
