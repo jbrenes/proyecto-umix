@@ -20,8 +20,6 @@
 	goto 	AtencionInterrupcion
 	
 
-	ORG 0x19
-Aux
 	ORG 0x20
 CONT
 	ORG 0x21
@@ -30,16 +28,17 @@ PASOS
 TEMP							;Variable temporal
 	ORG 0x23
 TipoInt							;Variable auxiliar para grabar el tipo de interrupción
-
+	ORG 0x24
+Aux
 
 	ORG 0x25
 Main
 	call 	Inicializacion
+	bsf		PORTD,7			;DEBUG
 	sleep
 	nop
-;	goto 	AtencionInterrupcion	;SOLO PARA DEBUG
+Chequeo
 	call	banco0
-;	clrf	INTCON				;Deshabilito interrupciones
 	btfsc	TipoInt,0			;Me fijo si me enviaron Adelante
 	goto	SubrutinaAdelante	;Si, entonces ejecuto SubrutinaAdelante
 	btfsc	TipoInt,1			;No, entonces me fijo si me enviaron Atrás
@@ -75,6 +74,11 @@ Main
 
 	
 Inicializacion
+	call	banco0
+	clrf 	PORTA
+	clrf 	PORTB
+	clrf 	PORTC
+	clrf 	PORTD
 	call	banco1
 	movlw	b'11111111' 
 	movwf 	TRISA 		;Configuramos el puerto A como entrada (Por ahora no lo vamos a usar)
@@ -93,7 +97,6 @@ Inicializacion
 	call 	banco0		;Nos posicionamos en el banco 0
 	clrf 	INTCON		;Deshabilitamos todas las interrupciones
 	clrf	PORTD		;Borra el puerto D
-	bsf		PORTD,7		;DEBUG
 	clrf	PORTC		;Borra el puerto C
 	bsf		PORTB,1		;Restea flip-flop asociado al sensor derecho
 	bsf		PORTB,2		;Restea flip-flop asociado al sensor izquierdo
@@ -120,15 +123,16 @@ Inicializacion
 	movf 	PORTB,W 		;Leemos el puerto B
 	movlw	b'10011000'		;Habilitamos interrupciones globales, interrupción externa de RB0 e interrupción RB port change
 	movwf	INTCON			;y limpiamos los flags
-	
 	return
 
 AtencionInterrupcion
 	call	banco0
-	bsf		PORTB,3				;DEBUG
+	bcf		PORTD,7				;DEBUG
 	bcf		INTCON,GIE			;Deshabilito interrupciones globales
 	bcf		INTCON,RBIE			;Deshabilito interrupcion RB port change
 	bcf		INTCON,INTE			;Deshabilito interrupcion externa
+	clrf	PORTC
+	bsf		PIR1,1
 	btfsc 	INTCON,RBIF 		;La interrupción fue por un cambio en RB4:RB7?
 	goto 	AtencionSensores 	;Si, entonces voy a la rutina de atención correspondiente 
 	btfsc	INTCON,INTF 		;No, entonces me fijo si la interrupción fue porque la placa BB va a enviar una directiva.
@@ -159,6 +163,8 @@ AtencionSensores
 
 Tipo4
 	bsf		TipoInt,4	;Seteo el flag 4 de la variable TipoInt
+	bsf		PORTB,1		;Envío Reset al flip-flop
+	bcf		PORTB,1		;Apago el reset del flip-flop
 	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
 	bsf		INTCON,INTE ;interrupcion externa
 	bsf		INTCON,GIE	;e interrupciones globales
@@ -166,6 +172,8 @@ Tipo4
 	
 Tipo5
 	bsf		TipoInt,5	;Seteo el flag 5 de la variable TipoInt
+	bsf		PORTB,2		;Envío Reset al flip-flop
+	bcf		PORTB,2		;Apago el reset del flip-flop
 	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
 	bsf		INTCON,INTE ;interrupcion externa
 	bsf		INTCON,GIE	;e interrupciones globales
@@ -184,6 +192,7 @@ Tipo6
 
 RecibirDirectiva
 	call	banco0
+	movf	PORTB,W
 	bcf 	INTCON,INTF ;Pongo en cero el flag correspondiente a la interrupción externa de RB0
 	btfsc	PORTD,0		;Testeo si me enviaron Adelante
 	goto	Tipo0		;Si, entonces voy a Tipo0
@@ -200,7 +209,7 @@ RecibirDirectiva
 
 
 Tipo0
-	bsf		TipoInt,0	;Seteo el flag 0 de la variable TipoInt
+	bsf		TipoInt,0	;Seteo el flag 0 de la variable TipoInt	
 	bsf		INTCON,RBIE	;Vuelvo a habilitar la interrupicón RB port change,
 	bsf		INTCON,INTE ;interrupcion externa
 	bsf		INTCON,GIE	;e interrupciones globales
@@ -258,7 +267,7 @@ SubrutinaAdelante
 	call	Espera
 	call	Detener
 	call	LiberarMotorTraccion	
-	goto	Main		
+	goto	Chequeo	
 
 
 Atras
@@ -275,7 +284,7 @@ SubrutinaAtras
 	call	Espera
 	call	Detener
 	call	LiberarMotorTraccion
-	goto	Main
+	goto	Chequeo
 
 Detener
 	call	banco0
@@ -334,7 +343,7 @@ SubrutinaDerecha
 	call	Derecha
 	call	Detener
 	call	LiberarMotorTraccion
-	goto	Main
+	goto	Chequeo
 
 Izquierda
 	bsf		PORTC,3			;Tomamos el control del motor
@@ -363,7 +372,7 @@ SubrutinaIzquierda
 	call	Izquierda
 	call	Detener
 	call	LiberarMotorTraccion
-	goto	Main
+	goto	Chequeo
 
 LiberarMotorPaP
 	call	banco0
@@ -423,7 +432,6 @@ EsperaPaP
 	movwf	PR2				;Escribimos 255 en PR2 para que TMR2 incremente hasta 255
 	call	banco0
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
-;	clrf	T2CON			;Configuramos prescaler y postscaler 1:1
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
 	bsf		T2CON,2			;Encendemos el Timer 2
@@ -442,22 +450,18 @@ Test
 SubrutinaObstDer
 	call	banco0
 	bcf		TipoInt,4		;Limpio el flag de TipoInt
-	bsf		PORTB,1			;Envío Reset al flip-flop
 	bsf		PORTD,4			;Notifico a la placa que se detectó un obstáculo del lado derecho
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
-	bcf		PORTB,1			;Apago el bit de reset	
 	bcf		PORTD,4			;Limpio el bit RD4
-	goto	Main
+	goto	Chequeo
 
 SubrutinaObstIzq
 	call	banco0
 	bcf		TipoInt,5		;Limpio el flag de TipoInt
-	bsf		PORTB,2			;Envío Reset al flip-flop
 	bsf		PORTD,5			;Notifico a la placa que se detectó un obstáculo del lado izquierdo
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
-	bcf		PORTB,2			;Apago el bit de reset
 	bcf		PORTD,5			;Limpio el bit RD5
-	goto	Main
+	goto	Chequeo
 
 SubrutinaIR
 	call	banco0
@@ -465,7 +469,7 @@ SubrutinaIR
 	bsf		PORTD,6			;Notifico a la placa que se detectó luz IR
 	call	EsperaNotific	;Ejecuto rutina de espera para que la placa lea el dato
 	bcf		PORTD,6			;Limpio el bit RD6
-	goto	Main
+	goto	Chequeo
 
 EsperaNotific				;CONFIGURAR EL TIEMPO DE ESPERA NECESARIO
 	call	banco1
