@@ -39,6 +39,9 @@ Main
 	nop
 Chequeo
 	call	banco0
+	movlw	b'00110010'
+	movwf	Aux			;Seteo Aux en 50 para que el tiempo de espera para notificar
+						;a la BB sea de 2 seg aprox (HAY QUE AJUSTARLO)
 	btfsc	TipoInt,0			;Me fijo si me enviaron Adelante
 	goto	SubrutinaAdelante	;Si, entonces ejecuto SubrutinaAdelante
 	btfsc	TipoInt,1			;No, entonces me fijo si me enviaron Atrás
@@ -105,9 +108,6 @@ Inicializacion
 
 	clrf	CONT		;Pongo en cero el contador
 	clrf	TEMP		;Pongo en cero la variable temporal
-	movlw	b'00110010'
-	movwf	Aux			;Seteo Aux en 50 para que el tiempo de espera para notificar
-						;a la BB sea de 2 seg aprox (HAY QUE AJUSTARLO)
 	clrf	TipoInt		;Pongo en cero la variable para el tipo de interrupción
 	movlw	b'00001010'
 	movwf	PASOS		;Seteo en 7 la cantidad de pasos (Es necesario ajustarlo)
@@ -418,6 +418,7 @@ Espera
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
+	bcf		PIR1,1			;Ponemos en cero el flag del timer2
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	decf	Aux,1			;Decremento Aux
@@ -434,6 +435,7 @@ EsperaPaP
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
+	bcf		PIR1,1			;Ponemos en cero el flag del timer2
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	return
@@ -479,6 +481,7 @@ EsperaNotific				;CONFIGURAR EL TIEMPO DE ESPERA NECESARIO
 	clrf	TMR2			;Pongo en 0 el registro del timer 2
 	movlw	b'01111011'		;Configuramos prescaler y postscaler 1:16
 	movwf	T2CON
+	bcf		PIR1,1			;Ponemos en cero el flag del timer2
 	bsf		T2CON,2			;Encendemos el Timer 2
 	call	Test			;Testeo si terminó la espera
 	decf	Aux,1			;Decremento la variable Aux
