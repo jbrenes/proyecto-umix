@@ -1,0 +1,19 @@
+#!/bin/bash 
+
+INT=142
+MOV=137 
+
+echo ${MOV} > /sys/class/gpio/export
+echo ${INT} > /sys/class/gpio/export
+
+echo high > /sys/class/gpio/gpio${MOV}/direction
+echo high > /sys/class/gpio/gpio${INT}/direction
+
+sleep 3
+
+echo low > /sys/class/gpio/gpio${INT}/direction
+echo low > /sys/class/gpio/gpio${MOV}/direction
+
+
+#echo ${MOV} > /sys/class/gpio/unexport
+#echo ${INT} > /sys/class/gpio/unexport
